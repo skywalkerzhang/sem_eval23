@@ -4,11 +4,37 @@ import pytorch_lightning as pl
 from transformers import AdamW, get_linear_schedule_with_warmup
 import pandas as pd
 from sklearn.metrics import f1_score
+from torch.optim.lr_scheduler import LambdaLR
+import torch.nn.functional as F
+
+
+class FocalLoss(torch.nn.Module):
+    def __init__(self, alpha=1, gamma=2, reduce=True):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduce = reduce
+
+    def forward(self, inputs, targets):
+        # Use sigmoid to get probabilities
+        probs = torch.sigmoid(inputs)
+
+        # This computes the probabilities for correct classification
+        true_probs = probs * targets + (1 - probs) * (1 - targets)
+        log_probs = torch.log(true_probs + 1e-8)  # adding a small epsilon for numerical stability
+
+        # Compute the loss
+        loss = -self.alpha * (1 - true_probs) ** self.gamma * log_probs
+
+        if self.reduce:
+            return loss.mean()  # use mean() instead of sum() for consistency
+        else:
+            return loss
 
 
 class DeBERTaClassifier(pl.LightningModule):
     def __init__(self, num_labels, learning_rate, warmup_steps, epochs,
-                 model_path="microsoft/deberta-v3-xsmall"):
+                 model_path="microsoft/deberta-v3-base"):
         super(DeBERTaClassifier, self).__init__()
 
         self.model = DebertaV2ForSequenceClassification.from_pretrained(model_path, num_labels=num_labels)
@@ -16,7 +42,8 @@ class DeBERTaClassifier(pl.LightningModule):
         self.learning_rate = learning_rate
         self.warmup_steps = warmup_steps
         self.epochs = epochs
-        self.loss_fn = torch.nn.BCEWithLogitsLoss()
+        # self.loss_fn = torch.nn.BCEWithLogitsLoss()
+        self.loss_fn = FocalLoss(alpha=1, gamma=2)
 
         for param in self.model.parameters():
             assert param.requires_grad, "Some model parameters do not require gradients!"
@@ -63,7 +90,13 @@ class DeBERTaClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        lambda_func = lambda epoch: 0.95 ** epoch
+        scheduler = LambdaLR(optimizer, lr_lambda=lambda_func)
+
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': scheduler
+        }
 
     def test_step(self, batch, batch_idx):
         if len(batch) == 3:
@@ -84,7 +117,6 @@ class DeBERTaClassifier(pl.LightningModule):
         # Append results
         self.predicted_labels_list.append(output_results["predicted_labels"])
 
-
     def on_test_epoch_end(self):
         if not hasattr(self, "predicted_labels_list"):
             self.predicted_labels_list = []
@@ -95,9 +127,7 @@ class DeBERTaClassifier(pl.LightningModule):
         df = pd.DataFrame(all_predicted_labels)
 
         # Save to CSV
-        df.to_csv("predicted_labels.csv", index=False)
+        df.to_csv("predicted_labels_focal_loss.csv", index=False)
 
         # Optionally, clear the list for future test runs
         del self.predicted_labels_list
-
-

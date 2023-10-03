@@ -53,22 +53,22 @@ if __name__ == '__main__':
     test_texts = test_data_df['combined_text'].tolist()
     test_labels = labels_test_df.values
 
-    tokenizer = DebertaV2Tokenizer.from_pretrained("microsoft/deberta-v3-xsmall")
+    tokenizer = DebertaV2Tokenizer.from_pretrained("microsoft/deberta-v3-base")
     train_dataset = HumanValueDataset(tokenizer, texts, labels)
     train_subset = Subset(train_dataset, indices=range(1))
 
     # train_loader = DataLoader(train_subset, batch_size=8, shuffle=True)
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=2)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=2)
     val_dataset = HumanValueDataset(tokenizer, val_texts, val_labels)
     # val_subset = Subset(val_dataset, indices=range(1))
     # val_loader = DataLoader(val_subset, batch_size=8, shuffle=False, num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, num_workers=2)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=2)
     test_dataset = HumanValueDataset(tokenizer, test_texts, test_labels)
     # test_subset = Subset(test_dataset, indices=range(1))
     # test_loader = DataLoader(test_subset, batch_size=8, shuffle=False, num_workers=2)
-    test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
     # 注意：num_labels要设置为你标签的数量
-    model = DeBERTaClassifier(num_labels=labels.shape[1], learning_rate=3e-5, warmup_steps=100, epochs=20)
+    model = DeBERTaClassifier(num_labels=labels.shape[1], learning_rate=5e-6, warmup_steps=100, epochs=10)
     pl.seed_everything(42)
 
     checkpoint_callback = ModelCheckpoint(
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         mode='min'  # 当监控的验证损失减少时保存模型
     )
 
-    trainer = pl.Trainer(max_epochs=20, accelerator='gpu', logger=wandb_logger)
+    trainer = pl.Trainer(max_epochs=10, accelerator='gpu', logger=wandb_logger)
     trainer.fit(model, train_loader, val_loader)
     trainer.test(model, test_loader)
     wandb.finish()
