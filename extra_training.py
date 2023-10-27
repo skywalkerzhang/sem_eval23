@@ -108,7 +108,7 @@ if __name__ == '__main__':
         dirpath='./checkpoints_phase1',
         filename='best_model_phase1_premise',
         save_top_k=1,
-        mode='min'
+        mode='max'
     )
 
     trainer = pl.Trainer(max_epochs=10, accelerator='gpu', logger=wandb_logger, callbacks=[checkpoint_callback])

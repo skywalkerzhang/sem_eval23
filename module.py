@@ -130,7 +130,6 @@ class DeBERTaClassifier(pl.LightningModule):
     def __init__(self, num_labels=1, learning_rate=5e-6, warmup_steps=100, epochs=10,
                  model_path="microsoft/deberta-v3-xsmall", extra_training=False, binary_training=False):
         super(DeBERTaClassifier, self).__init__()
-
         self.model = DebertaV2ForSequenceClassification.from_pretrained(model_path, num_labels=num_labels)
         self.tokenizer = DebertaV2Tokenizer.from_pretrained(model_path)
         self.learning_rate = learning_rate
@@ -211,6 +210,7 @@ class DeBERTaClassifier(pl.LightningModule):
         # Logging
         self.log('val_loss', avg_loss, prog_bar=True)
         self.log('macro_f1', macro_f1, prog_bar=True)
+        torch.cuda.empty_cache()
 
         return {'val_loss': avg_loss, 'macro_f1': macro_f1}
 

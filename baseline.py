@@ -93,7 +93,7 @@ if __name__ == '__main__':
         dirpath='./checkpoints',  # 保存文件的目录
         filename='best_model',  # 保存文件的名称
         save_top_k=1,  # 仅保存最好的模型
-        mode='min'  # 当监控的验证损失减少时保存模型
+        mode='max'  # 当监控的验证损失减少时保存模型
     )
 
     trainer = pl.Trainer(max_epochs=10, accelerator='gpu', logger=wandb_logger, callbacks=[checkpoint_callback])

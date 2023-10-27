@@ -11,7 +11,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    model = DeBERTaClassifier.load_from_checkpoint(r'D:\UTD\Research\semeval2023-baseline\checkpoints_binary\best_model-v2.ckpt')
+    model = DeBERTaClassifier.load_from_checkpoint(r'D:\UTD\Research\semeval2023-baseline\checkpoints_binary\best_model.ckpt')
     model.eval()
     model.to('cuda')
     tokenizer = DebertaV2Tokenizer.from_pretrained("microsoft/deberta-v3-xsmall")
