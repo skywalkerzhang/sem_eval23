@@ -1,0 +1,5 @@
+checkpoints*/
+wandb/
+lightning_logs/
+.idea/
+__pycache__/

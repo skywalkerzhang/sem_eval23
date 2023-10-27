@@ -3,8 +3,8 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import balanced_accuracy_score
 
 # Load the predicted labels
-predicted_labels_df_fl = pd.read_csv("predicted_labels_focal_loss.csv", header=0)
-predicted_labels_df_bce = pd.read_csv("predicted_labels_BCE.csv", header=0)
+predicted_labels_df_fl = pd.read_csv("predicted_labels_focal_loss_50.csv", header=None)
+predicted_labels_df_bce = pd.read_csv("predicted_labels_BCE.csv", header=None)
 # Load the true labels (skip the "Argument ID" column)
 true_labels_df = pd.read_csv("data/labels-test.tsv", delimiter='\t', index_col='Argument ID')
 
